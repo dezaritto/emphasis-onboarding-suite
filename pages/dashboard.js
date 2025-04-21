@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx';
 
 const workflows = {
   "Full Planning – No Plan": [
@@ -66,20 +65,30 @@ export default function Dashboard() {
     }
   };
 
-  const exportToExcel = () => {
-    const rows = clients.flatMap(client =>
-      client.steps.map((s, i) => ({
-        Client: client.name,
-        Workflow: client.workflow,
-        Step: s.step,
-        Completed: s.done ? "Yes" : "No",
-        Order: i + 1
-      }))
-    );
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Workflow Tracker");
-    XLSX.writeFile(wb, "emphasis-tracker.xlsx");
+  const exportToCSV = () => {
+    const rows = [
+      ["Client", "Workflow", "Step", "Completed", "Order"]
+    ];
+    clients.forEach(client => {
+      client.steps.forEach((s, i) => {
+        rows.push([
+          client.name,
+          client.workflow,
+          s.step,
+          s.done ? "Yes" : "No",
+          i + 1
+        ]);
+      });
+    });
+
+    const csvContent = rows.map(r => r.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "emphasis-tracker.csv");
+    link.click();
   };
 
   const nextStepLabel = (client) => {
@@ -102,8 +111,8 @@ export default function Dashboard() {
         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add Client</button>
       </form>
 
-      <button onClick={exportToExcel} className="mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-        Export to Excel
+      <button onClick={exportToCSV} className="mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+        Export to CSV
       </button>
 
       {selected === null ? (

@@ -6,6 +6,7 @@ export default function MetaSelector() {
     { label: "Limited Plan – No Plan", path: "/workflow/limited-no-plan" },
     { label: "Product Advice", path: "/workflow/product-advice" },
     { label: "Intermediary Only", path: "/workflow/intermediary-only" },
+    { label: "Intermediary Client – Value Proposition Intro", path: "/workflow/intermediary-intro" },
     { label: "Adviser Dashboard", path: "/dashboard" }
   ];
 

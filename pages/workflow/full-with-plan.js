@@ -1,27 +1,52 @@
+import { useState } from "react";
+
+const steps = [
+  "Initial Contact and Schedule FIT Meeting",
+  "Conduct FIT Meeting – Mutual fit & planning overview",
+  "Client reflects; adviser follows up with consent form",
+  "Consent form signed and returned",
+  "ASTUTE FSE pulled (if applicable)",
+  "Discovery meeting scheduled and prepared for",
+  "Collect FICA and full client information",
+  "Review existing financial plan and identify gaps",
+  "Draft personalised plan and prepare recommendations",
+  "Plan presentation and agreement",
+  "Implementation strategy confirmed",
+  "Implementation and product applications initiated"
+];
+
 export default function FullWithPlanWorkflow() {
-  const steps = [
-    { title: "Step 1: FIT Meeting", details: "Discuss current plan and intentions. Use ProfileMe to build rapport. Assess if Emphasis is a better fit." },
-    { title: "Step 2: Post-FIT Reflection", details: "Both parties reflect before deciding to proceed." },
-    { title: "Step 3: Consent Form", details: "Send Client Consent Form securely. Wait for signature before reviewing documents." },
-    { title: "Step 4: Receive Existing Plan", details: "Client submits their current plan for assessment." },
-    { title: "Step 5: Plan Review", details: "Adviser reviews assumptions, gaps, and relevance. Log as replacement advice if applicable." },
-    { title: "Step 6: Discovery Meeting", details: "Understand updated needs, values, and gaps not covered by current plan." },
-    { title: "Step 7: Decide to Adopt or Replace", details: "Either adopt with minor updates or prepare a new Emphasis plan." },
-    { title: "Step 8: FICA + Client Info", details: "Admin collects after consent and decision to proceed." },
-    { title: "Step 9: Deliver Emphasis Plan", details: "Present updated or new plan. Transition to implementation phase." }
-  ];
+  const [completedSteps, setCompletedSteps] = useState([]);
+
+  const toggleStep = (step) => {
+    setCompletedSteps((prev) =>
+      prev.includes(step)
+        ? prev.filter((s) => s !== step)
+        : [...prev, step]
+    );
+  };
 
   return (
-    <div className="min-h-screen p-6 bg-white text-gray-900">
-      <h1 className="text-2xl font-bold mb-6">Workflow: Full Planning (With Existing Plan)</h1>
-      <ol className="space-y-4 list-decimal list-inside">
-        {steps.map((step, i) => (
-          <li key={i} className="bg-gray-50 p-4 rounded-xl border">
-            <h2 className="font-semibold">{step.title}</h2>
-            <p className="text-sm mt-1">{step.details}</p>
-          </li>
+    <div className="min-h-screen bg-white p-6 text-gray-800">
+      <h1 className="text-2xl font-bold mb-6">New Client Workflow – Full Planning (With Existing Plan)</h1>
+      <div className="grid gap-4">
+        {steps.map((step, index) => (
+          <div
+            key={index}
+            onClick={() => toggleStep(step)}
+            className={`p-4 border rounded-lg cursor-pointer ${
+              completedSteps.includes(step)
+                ? "bg-green-100 border-green-600"
+                : "border-gray-300 hover:bg-gray-100"
+            }`}
+          >
+            {step}
+          </div>
         ))}
-      </ol>
+      </div>
+      <p className="mt-6 text-sm text-gray-500">
+        Click on steps to mark as complete. Progress is currently session-based only.
+      </p>
     </div>
   );
 }

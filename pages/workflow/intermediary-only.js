@@ -1,26 +1,48 @@
+import { useState } from "react";
+
+const steps = [
+  "Client Requests Administrative Support",
+  "Verify Identity and Policy Access",
+  "Confirm Required Forms and Documentation",
+  "Prepare and Send Relevant Forms",
+  "Assist Client with Completion if Needed",
+  "Submit to Product Provider",
+  "Confirm Update/Request Processed",
+  "Close the Loop – Notify Client & Update CRM"
+];
+
 export default function IntermediaryOnlyWorkflow() {
-  const steps = [
-    { title: "Step 1: Client Contact", details: "Confirm execution-only (no advice) request. Explain intermediary role clearly." },
-    { title: "Step 2: Define Product Request", details: "Identify specific product (e.g. tax-free investment, RA, preservation fund)." },
-    { title: "Step 3: Consent & Execution Agreement", details: "Send intermediary-only terms and POPIA/FAIS acknowledgements." },
-    { title: "Step 4: Collect Documents", details: "Gather ID, proof of address, bank account details, and any necessary KYC info." },
-    { title: "Step 5: Assist with Application", details: "Help client fill provider forms (no product advice). Clarify execution-only." },
-    { title: "Step 6: Submit Forms", details: "Send signed documents to the product provider. Track submission." },
-    { title: "Step 7: Confirm Setup", details: "Notify client when account is live. Provide supporting documentation." },
-    { title: "Step 8: File Record", details: "Log interaction, upload documents, and confirm non-advice disclosure." }
-  ];
+  const [completedSteps, setCompletedSteps] = useState([]);
+
+  const toggleStep = (step) => {
+    setCompletedSteps((prev) =>
+      prev.includes(step)
+        ? prev.filter((s) => s !== step)
+        : [...prev, step]
+    );
+  };
 
   return (
-    <div className="min-h-screen p-6 bg-white text-gray-900">
-      <h1 className="text-2xl font-bold mb-6">Workflow: Product Implementation (Intermediary Only)</h1>
-      <ol className="space-y-4 list-decimal list-inside">
-        {steps.map((step, i) => (
-          <li key={i} className="bg-gray-50 p-4 rounded-xl border">
-            <h2 className="font-semibold">{step.title}</h2>
-            <p className="text-sm mt-1">{step.details}</p>
-          </li>
+    <div className="min-h-screen bg-white p-6 text-gray-800">
+      <h1 className="text-2xl font-bold mb-6">New Client Workflow – Product Implementation (Intermediary Only)</h1>
+      <div className="grid gap-4">
+        {steps.map((step, index) => (
+          <div
+            key={index}
+            onClick={() => toggleStep(step)}
+            className={`p-4 border rounded-lg cursor-pointer ${
+              completedSteps.includes(step)
+                ? "bg-green-100 border-green-600"
+                : "border-gray-300 hover:bg-gray-100"
+            }`}
+          >
+            {step}
+          </div>
         ))}
-      </ol>
+      </div>
+      <p className="mt-6 text-sm text-gray-500">
+        Click on steps to mark as complete. Progress is currently session-based only.
+      </p>
     </div>
   );
 }

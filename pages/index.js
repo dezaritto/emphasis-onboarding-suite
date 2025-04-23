@@ -15,6 +15,7 @@ export default function MetaSelector() {
       title: "Existing Clients",
       routes: [
         { label: "Intermediary to Planning Introduction", path: "/workflow/existing-intro" },
+        { label: "Existing Client Review Process", path: "/workflow/existing-review" }
       ]
     },
     {

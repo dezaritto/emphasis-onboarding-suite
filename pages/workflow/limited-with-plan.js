@@ -1,26 +1,50 @@
+import { useState } from "react";
+
+const steps = [
+  "Initial Contact and Identify Planning Need",
+  "Schedule FIT Meeting",
+  "Conduct FIT Meeting – Assess scope for limited advice",
+  "Consent form sent and returned",
+  "Review Existing Financial Plan",
+  "Define Specific Objective or Advice Area",
+  "Collect Supporting Info (FICA, etc.)",
+  "Prepare Limited Scope Recommendations",
+  "Present and Agree Plan",
+  "Implementation (if applicable)"
+];
+
 export default function LimitedWithPlanWorkflow() {
-  const steps = [
-    { title: "Step 1: FIT Meeting", details: "Clarify client is seeking limited advice. Use ProfileMe and 'What’s Important to You' for light discovery." },
-    { title: "Step 2: Post-FIT Reflection", details: "Agree whether to proceed with limited scope only." },
-    { title: "Step 3: Consent Form + Scope", details: "Send limited advice consent form and define the boundaries of the engagement." },
-    { title: "Step 4: Submit Existing Plan", details: "Client shares their current plan for context." },
-    { title: "Step 5: Review Plan Briefly", details: "Only assess parts related to their query. Avoid holistic review." },
-    { title: "Step 6: Request Additional Info", details: "Ask for specific documents (e.g. cover, income, tax) if needed." },
-    { title: "Step 7: Deliver Advice", details: "Provide focused advice without encroaching into full planning." },
-    { title: "Step 8: Optional Check-In", details: "Invite the client to revisit broader planning later." }
-  ];
+  const [completedSteps, setCompletedSteps] = useState([]);
+
+  const toggleStep = (step) => {
+    setCompletedSteps((prev) =>
+      prev.includes(step)
+        ? prev.filter((s) => s !== step)
+        : [...prev, step]
+    );
+  };
 
   return (
-    <div className="min-h-screen p-6 bg-white text-gray-900">
-      <h1 className="text-2xl font-bold mb-6">Workflow: Limited Planning (With Existing Plan)</h1>
-      <ol className="space-y-4 list-decimal list-inside">
-        {steps.map((step, i) => (
-          <li key={i} className="bg-gray-50 p-4 rounded-xl border">
-            <h2 className="font-semibold">{step.title}</h2>
-            <p className="text-sm mt-1">{step.details}</p>
-          </li>
+    <div className="min-h-screen bg-white p-6 text-gray-800">
+      <h1 className="text-2xl font-bold mb-6">New Client Workflow – Limited Planning (With Existing Plan)</h1>
+      <div className="grid gap-4">
+        {steps.map((step, index) => (
+          <div
+            key={index}
+            onClick={() => toggleStep(step)}
+            className={`p-4 border rounded-lg cursor-pointer ${
+              completedSteps.includes(step)
+                ? "bg-green-100 border-green-600"
+                : "border-gray-300 hover:bg-gray-100"
+            }`}
+          >
+            {step}
+          </div>
         ))}
-      </ol>
+      </div>
+      <p className="mt-6 text-sm text-gray-500">
+        Click on steps to mark as complete. Progress is currently session-based only.
+      </p>
     </div>
   );
 }

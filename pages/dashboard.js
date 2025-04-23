@@ -1,157 +1,148 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
+import * as XLSX from "xlsx";
 
 const workflows = {
-  "Full Planning – No Plan": [
-    "FIT Meeting", "Post-FIT Reflection", "Consent Form", "ASTUTE Pull (If Needed)",
-    "Discovery Meeting", "FICA + Client Info", "Prepare & Deliver Plan", "Confirm Implementation Preferences"
+  "Full Plan – No Plan": [
+    "Initial Contact and Schedule FIT Meeting",
+    "Conduct FIT Meeting",
+    "Consent Form Signed",
+    "ASTUTE FSE Pulled",
+    "Discovery Meeting Scheduled",
+    "Collect FICA & Client Info",
+    "Plan Preparation",
+    "Plan Presentation",
+    "Implementation Confirmed",
+    "Implementation Initiated"
   ],
-  "Full Planning – With Plan": [
-    "FIT Meeting", "Post-FIT Reflection", "Consent Form", "Receive Existing Plan",
-    "Plan Review", "Discovery Meeting", "Decide to Adopt or Replace", "FICA + Client Info", "Deliver Emphasis Plan"
-  ],
-  "Limited Planning – With Plan": [
-    "FIT Meeting", "Post-FIT Reflection", "Consent Form + Scope", "Submit Existing Plan",
-    "Review Plan Briefly", "Request Additional Info", "Deliver Advice", "Optional Check-In"
-  ],
-  "Limited Planning – No Plan": [
-    "FIT Meeting", "Define Scope", "Consent Form + Scope", "Gather Info",
-    "Discovery (if needed)", "Deliver Advice", "Invite Future Planning"
-  ],
-  "Product Advice & Implementation": [
-    "FIT/Intro Meeting", "Scope of Advice", "Consent Form + Advice Scope", "Collect Info",
-    "Draft Recommendation", "Present Advice", "Implementation", "File & Record Advice"
-  ],
-  "Product Implementation (Intermediary Only)": [
-    "Client Contact", "Define Product Request", "Consent & Execution Agreement", "Collect Documents",
-    "Assist with Application", "Submit Forms", "Confirm Setup", "File Record"
+  "Existing Client Review Process": [
+    "Review Due Notification",
+    "Pre-Review Prep Email Sent",
+    "Client Completes Info Update Form",
+    "ASTUTE Report Pulled",
+    "Review Meeting Conducted",
+    "Meeting Notes & Adjustments",
+    "Recommendations Presented",
+    "Implementation Initiated",
+    "CRM & Docs Updated",
+    "Confirmation Sent"
   ]
 };
 
 export default function Dashboard() {
   const [clients, setClients] = useState([]);
-  const [form, setForm] = useState({ name: '', workflow: '' });
-  const [selected, setSelected] = useState(null);
+  const [newClient, setNewClient] = useState({ name: "", workflow: "" });
+  const [selectedIndex, setSelectedIndex] = useState(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("emphasis_clients");
+    const saved = localStorage.getItem("clientTracker");
     if (saved) setClients(JSON.parse(saved));
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("emphasis_clients", JSON.stringify(clients));
+    localStorage.setItem("clientTracker", JSON.stringify(clients));
   }, [clients]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const addClient = () => {
+    const steps = workflows[newClient.workflow].map(label => ({ label, completed: false, notes: "" }));
+    setClients([...clients, { ...newClient, steps, currentStep: 0 }]);
+    setNewClient({ name: "", workflow: "" });
   };
 
-  const addClient = (e) => {
-    e.preventDefault();
-    if (!form.name || !form.workflow) return;
-    const steps = workflows[form.workflow].map(step => ({ step, done: false }));
-    setClients([...clients, { ...form, steps }]);
-    setForm({ name: '', workflow: '' });
-  };
-
-  const toggleStep = (index) => {
+  const updateStep = (stepIndex) => {
     const updated = [...clients];
-    const client = updated[selected];
-    client.steps[index].done = !client.steps[index].done;
+    const client = updated[selectedIndex];
+    client.steps[stepIndex].completed = !client.steps[stepIndex].completed;
+    client.currentStep = stepIndex;
     setClients(updated);
-    if (client.steps.every(s => s.done)) {
-      updated.splice(selected, 1);
-      setClients(updated);
-      setSelected(null);
-    }
   };
 
-  const exportToCSV = () => {
-    const rows = [
-      ["Client", "Workflow", "Step", "Completed", "Order"]
-    ];
-    clients.forEach(client => {
-      client.steps.forEach((s, i) => {
-        rows.push([
-          client.name,
-          client.workflow,
-          s.step,
-          s.done ? "Yes" : "No",
-          i + 1
-        ]);
-      });
-    });
-
-    const csvContent = rows.map(r => r.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "emphasis-tracker.csv");
-    link.click();
+  const updateNote = (stepIndex, note) => {
+    const updated = [...clients];
+    updated[selectedIndex].steps[stepIndex].notes = note;
+    setClients(updated);
   };
 
-  const nextStepLabel = (client) => {
-    const next = client.steps.find(s => !s.done);
-    return next ? `Next: ${next.step}` : "Complete";
+  const exportToExcel = () => {
+    const data = clients.map(c => ({
+      Name: c.name,
+      Workflow: c.workflow,
+      "Progress": `${c.steps.filter(s => s.completed).length}/${c.steps.length}`
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Clients");
+    XLSX.writeFile(wb, "ClientWorkflowTracker.xlsx");
   };
 
   return (
     <div className="min-h-screen p-6 bg-white text-gray-800">
-      <h1 className="text-2xl font-bold mb-6">Adviser Workflow Tracker</h1>
+      <h1 className="text-2xl font-bold mb-4">Adviser Dashboard</h1>
 
-      <form onSubmit={addClient} className="space-y-4 mb-6">
-        <input name="name" placeholder="Client Name" value={form.name} onChange={handleChange} className="w-full p-2 border rounded" />
-        <select name="workflow" value={form.workflow} onChange={handleChange} className="w-full p-2 border rounded">
+      <div className="flex gap-2 mb-6">
+        <input
+          type="text"
+          placeholder="Client Name"
+          value={newClient.name}
+          onChange={e => setNewClient({ ...newClient, name: e.target.value })}
+          className="border p-2 rounded w-1/3"
+        />
+        <select
+          value={newClient.workflow}
+          onChange={e => setNewClient({ ...newClient, workflow: e.target.value })}
+          className="border p-2 rounded w-1/3"
+        >
           <option value="">Select Workflow</option>
-          {Object.keys(workflows).map((wf, i) => (
-            <option key={i} value={wf}>{wf}</option>
+          {Object.keys(workflows).map(w => (
+            <option key={w}>{w}</option>
           ))}
         </select>
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add Client</button>
-      </form>
+        <button onClick={addClient} className="bg-blue-600 text-white px-4 py-2 rounded">
+          Add Client
+        </button>
+        <button onClick={exportToExcel} className="bg-green-600 text-white px-4 py-2 rounded">
+          Export to Excel
+        </button>
+      </div>
 
-      <button onClick={exportToCSV} className="mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-        Export to CSV
-      </button>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {clients.map((client, index) => (
+          <div
+            key={index}
+            onClick={() => setSelectedIndex(index)}
+            className="border rounded p-4 shadow cursor-pointer hover:bg-gray-50"
+          >
+            <h2 className="font-semibold text-lg">{client.name}</h2>
+            <p className="text-sm text-gray-600">{client.workflow}</p>
+            <p className="text-sm mt-2">\              Progress: {client.steps.filter(s => s.completed).length}/{client.steps.length}
+            </p>
+          </div>
+        ))}
+      </div>
 
-      {selected === null ? (
-        <table className="min-w-full border bg-white">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border px-4 py-2 text-left">Client</th>
-              <th className="border px-4 py-2 text-left">Workflow</th>
-              <th className="border px-4 py-2 text-left">Progress</th>
-              <th className="border px-4 py-2 text-left">Next Step</th>
-              <th className="border px-4 py-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((c, i) => (
-              <tr key={i}>
-                <td className="border px-4 py-2">{c.name}</td>
-                <td className="border px-4 py-2">{c.workflow}</td>
-                <td className="border px-4 py-2">{c.steps.filter(s => s.done).length}/{c.steps.length}</td>
-                <td className="border px-4 py-2">{nextStepLabel(c)}</td>
-                <td className="border px-4 py-2">
-                  <button onClick={() => setSelected(i)} className="text-blue-600 underline">View</button>
-                </td>
-              </tr>
+      {selectedIndex !== null && (
+        <div className="mt-10">
+          <h2 className="text-xl font-bold mb-4">\            Workflow for {clients[selectedIndex].name}
+          </h2>
+          <div className="space-y-4">
+            {clients[selectedIndex].steps.map((step, i) => (
+              <div key={i} className="border p-4 rounded">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{step.label}</span>
+                  <input
+                    type="checkbox"
+                    checked={step.completed}
+                    onChange={() => updateStep(i)}
+                  />
+                </div>
+                <textarea
+                  placeholder="Add notes..."
+                  value={step.notes}
+                  onChange={e => updateNote(i, e.target.value)}
+                  className="w-full mt-2 border p-2 rounded"
+                />
+              </div>
             ))}
-          </tbody>
-        </table>
-      ) : (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">{clients[selected].name} – {clients[selected].workflow}</h2>
-          <ul className="space-y-2">
-            {clients[selected].steps.map((s, i) => (
-              <li key={i} className="flex items-center space-x-3">
-                <input type="checkbox" checked={s.done} onChange={() => toggleStep(i)} />
-                <span className={s.done ? "line-through text-gray-500" : ""}>{s.step}</span>
-              </li>
-            ))}
-          </ul>
-          <button onClick={() => setSelected(null)} className="mt-6 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Back</button>
+          </div>
         </div>
       )}
     </div>

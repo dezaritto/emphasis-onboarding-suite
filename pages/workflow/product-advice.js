@@ -1,26 +1,50 @@
+import { useState } from "react";
+
+const steps = [
+  "Initial Contact – Client expresses need for product",
+  "Assess Client Understanding and Goals",
+  "Clarify Scope: Advice vs Implementation",
+  "Consent Form Signed",
+  "Gather Personal & Financial Information",
+  "Analyse Need & Evaluate Product Suitability",
+  "Compare Product Options & Providers",
+  "Present Product Recommendation",
+  "Obtain Acceptance & Complete Application Forms",
+  "Implementation Follow-up & Policy Confirmation"
+];
+
 export default function ProductAdviceWorkflow() {
-  const steps = [
-    { title: "Step 1: FIT/Intro Meeting", details: "Confirm scope is limited to product-specific advice. Clarify difference from full plan." },
-    { title: "Step 2: Scope of Advice", details: "Identify product type (e.g. retirement annuity, TFS, gap cover) and goal." },
-    { title: "Step 3: Consent Form + Advice Scope", details: "Send consent form outlining limited engagement." },
-    { title: "Step 4: Collect Info", details: "Request only info needed for this product (e.g. income, current cover, dependants)." },
-    { title: "Step 5: Draft Recommendation", details: "Prepare tailored recommendation and compare product options." },
-    { title: "Step 6: Present Advice", details: "Deliver advice via meeting or summary document." },
-    { title: "Step 7: Implementation", details: "Assist with application paperwork or online process." },
-    { title: "Step 8: File & Record Advice", details: "Ensure advice record and compliance filing is complete." }
-  ];
+  const [completedSteps, setCompletedSteps] = useState([]);
+
+  const toggleStep = (step) => {
+    setCompletedSteps((prev) =>
+      prev.includes(step)
+        ? prev.filter((s) => s !== step)
+        : [...prev, step]
+    );
+  };
 
   return (
-    <div className="min-h-screen p-6 bg-white text-gray-900">
-      <h1 className="text-2xl font-bold mb-6">Workflow: Product Advice & Implementation</h1>
-      <ol className="space-y-4 list-decimal list-inside">
-        {steps.map((step, i) => (
-          <li key={i} className="bg-gray-50 p-4 rounded-xl border">
-            <h2 className="font-semibold">{step.title}</h2>
-            <p className="text-sm mt-1">{step.details}</p>
-          </li>
+    <div className="min-h-screen bg-white p-6 text-gray-800">
+      <h1 className="text-2xl font-bold mb-6">New Client Workflow – Product Advice & Implementation</h1>
+      <div className="grid gap-4">
+        {steps.map((step, index) => (
+          <div
+            key={index}
+            onClick={() => toggleStep(step)}
+            className={`p-4 border rounded-lg cursor-pointer ${
+              completedSteps.includes(step)
+                ? "bg-green-100 border-green-600"
+                : "border-gray-300 hover:bg-gray-100"
+            }`}
+          >
+            {step}
+          </div>
         ))}
-      </ol>
+      </div>
+      <p className="mt-6 text-sm text-gray-500">
+        Click on steps to mark as complete. Progress is currently session-based only.
+      </p>
     </div>
   );
 }

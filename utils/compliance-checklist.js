@@ -1,6 +1,6 @@
 // utils/compliance-checklist.js
 
-const complianceChecklists = {
+export const complianceChecklists = {
   "Full Plan – No Plan": [
     "Discovery Meeting Conducted",
     "Signed Service Agreement",

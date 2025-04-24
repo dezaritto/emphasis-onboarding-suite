@@ -1,180 +1,132 @@
 import { useEffect, useState } from "react";
-import * as XLSX from "xlsx";
-import { complianceChecklist } from "../utils/compliance-checklist";
-
-const workflowSteps = {
-  "Full Plan – No Plan": [
-    "Initial Contact",
-    "FIT Meeting Held",
-    "Discovery Session Completed",
-    "Signed Full Planning Service Agreement",
-    "Plan Prepared",
-    "Plan Presented",
-    "Implementation Begins"
-  ],
-  "Product Implementation (Intermediary Only)": [
-    "Intermediary Contact Initiated",
-    "FICA Verification",
-    "Signed Intermediary Services Agreement",
-    "Service Request Submitted",
-    "Provider Update Confirmed"
-  ]
-};
+import COMPLIANCE_CHECKLIST from "../utils/compliance-checklist";
 
 export default function AdviserDashboard() {
-  const [clients, setClients] = useState([]);
+  const [clients, setClients] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("clientList");
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
   const [name, setName] = useState("");
   const [workflow, setWorkflow] = useState("");
 
   useEffect(() => {
-    const saved = localStorage.getItem("advisorClientData");
-    if (saved) setClients(JSON.parse(saved));
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("advisorClientData", JSON.stringify(clients));
+    localStorage.setItem("clientList", JSON.stringify(clients));
   }, [clients]);
 
   const addClient = () => {
     if (!name || !workflow) return;
-    const steps = workflowSteps[workflow] || [];
-    const compliance = complianceChecklist[workflow] || [];
-    setClients([
-      ...clients,
-      {
-        name,
-        workflow,
-        progress: [],
-        complianceProgress: [],
-        steps,
-        compliance
-      }
-    ]);
+    const newClient = {
+      id: Date.now(),
+      name,
+      workflow,
+      completedSteps: [],
+    };
+    setClients([...clients, newClient]);
     setName("");
     setWorkflow("");
   };
 
-  const toggleProgress = (index, step, type = "progress") => {
-    setClients((prev) => {
-      const updated = [...prev];
-      const client = updated[index];
-      const current = client[type];
-      client[type] = current.includes(step)
-        ? current.filter((s) => s !== step)
-        : [...current, step];
-
-      // Remove client if workflow and compliance are completed
-      if (
-        client.progress.length === client.steps.length &&
-        client.complianceProgress.length === client.compliance.length
-      ) {
-        updated.splice(index, 1);
-      }
-
-      return updated;
-    });
+  const toggleStep = (id, step) => {
+    setClients(prev =>
+      prev.map(client =>
+        client.id === id
+          ? {
+              ...client,
+              completedSteps: client.completedSteps.includes(step)
+                ? client.completedSteps.filter(s => s !== step)
+                : [...client.completedSteps, step],
+            }
+          : client
+      )
+    );
   };
 
-  const isCompliant = (client) =>
-    client.compliance.length > 0 &&
-    client.compliance.every((step) => client.complianceProgress.includes(step));
-
-  const exportToExcel = () => {
-    const data = clients.map((client) => ({
-      Name: client.name,
-      Workflow: client.workflow,
-      "Progress": `${client.progress.length}/${client.steps.length}`,
-      "Compliance Status": isCompliant(client) ? "Compliant" : "⚠️ Incomplete"
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Dashboard");
-    XLSX.writeFile(workbook, "Dashboard_Export.xlsx");
+  const removeClientIfComplete = (id) => {
+    const client = clients.find(c => c.id === id);
+    const isComplete = COMPLIANCE_CHECKLIST.every(step =>
+      client.completedSteps.includes(step)
+    );
+    if (isComplete) {
+      setClients(prev => prev.filter(c => c.id !== id));
+    }
   };
 
   return (
     <div className="min-h-screen bg-white p-6 text-gray-800">
       <h1 className="text-2xl font-bold mb-6">Adviser Dashboard</h1>
 
-      <div className="flex gap-4 mb-6 flex-wrap">
+      <div className="flex gap-4 mb-4">
         <input
+          type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Client Name"
-          className="border p-2 rounded w-64"
+          className="border p-2 rounded w-1/3"
         />
         <select
           value={workflow}
           onChange={(e) => setWorkflow(e.target.value)}
-          className="border p-2 rounded w-64"
+          className="border p-2 rounded w-1/3"
         >
           <option value="">Select Workflow</option>
-          {Object.keys(workflowSteps).map((w) => (
-            <option key={w}>{w}</option>
-          ))}
+          <option value="Full Plan – No Plan">Full Plan – No Plan</option>
+          <option value="Existing Client Review Process">
+            Existing Client Review Process
+          </option>
         </select>
         <button
           onClick={addClient}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           Add Client
         </button>
-        <button
-          onClick={exportToExcel}
-          className="bg-green-600 text-white px-4 py-2 rounded"
-        >
-          Export to Excel
-        </button>
       </div>
 
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr>
-            <th className="border-b p-2">Client</th>
-            <th className="border-b p-2">Workflow</th>
-            <th className="border-b p-2">Progress</th>
-            <th className="border-b p-2">Compliance</th>
-            <th className="border-b p-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {clients.map((client, index) => (
-            <tr key={index} className="border-t">
-              <td className="p-2 font-medium">{client.name}</td>
-              <td className="p-2">{client.workflow}</td>
-              <td className="p-2">
-                {client.steps.map((s, i) => (
-                  <label key={i} className="block">
-                    <input
-                      type="checkbox"
-                      checked={client.progress.includes(s)}
-                      onChange={() => toggleProgress(index, s, "progress")}
-                      className="mr-2"
-                    />
-                    {s}
-                  </label>
-                ))}
-              </td>
-              <td className="p-2">
-                {client.compliance.map((c, i) => (
-                  <label key={i} className="block">
-                    <input
-                      type="checkbox"
-                      checked={client.complianceProgress.includes(c)}
-                      onChange={() => toggleProgress(index, c, "complianceProgress")}
-                      className="mr-2"
-                    />
-                    {c}
-                  </label>
-                ))}
-              </td>
-              <td className="p-2 text-xl">
-                {isCompliant(client) ? "✅" : "⚠️"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {clients.length === 0 ? (
+        <p className="text-gray-500">No clients added yet.</p>
+      ) : (
+        <div className="space-y-6">
+          {clients.map(client => {
+            const isComplete = COMPLIANCE_CHECKLIST.every(step =>
+              client.completedSteps.includes(step)
+            );
+            const status = isComplete ? "✅" : "⚠️";
+
+            return (
+              <div key={client.id} className="border p-4 rounded shadow">
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="font-semibold">
+                    {client.name} ({client.workflow})
+                  </h2>
+                  <span className="text-xl">{status}</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {COMPLIANCE_CHECKLIST.map((step, index) => (
+                    <div
+                      key={index}
+                      onClick={() => {
+                        toggleStep(client.id, step);
+                        setTimeout(() => removeClientIfComplete(client.id), 500);
+                      }}
+                      className={`p-2 border rounded cursor-pointer text-sm ${
+                        client.completedSteps.includes(step)
+                          ? "bg-green-100 border-green-600"
+                          : "border-gray-300 hover:bg-gray-100"
+                      }`}
+                    >
+                      {step}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

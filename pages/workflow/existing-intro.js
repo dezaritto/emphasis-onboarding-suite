@@ -7,7 +7,7 @@ const steps = [
   "Explain Value of Financial Planning",
   "Send Discovery Questionnaire",
   "Book Intro Planning Meeting",
-  "Deliver Asset Map Brochure & Service Menu",
+  "Deliver AdviceTech Brochure & Service Menu",
   "Update CRM with Interest Level",
 ];
 

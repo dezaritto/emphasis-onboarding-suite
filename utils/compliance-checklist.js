@@ -70,6 +70,15 @@ export const complianceChecklist = {
     "Record of Advice Delivered",
     "Product Implemented",
   ],
+  "Intro to Planning": [
+  "Initial Contact Made",
+  "Discovery Meeting Booked",
+  "Discovery Meeting Completed",
+  "Identify Client Needs and Goals",
+  "Deliver Introductory Pack",
+  "Agree Next Steps",
+  "Confirm Consent to Proceed",
+  ],
   "Existing Client Review Process": [
     "Book Review Meeting",
     "Review Goals & Objectives",
